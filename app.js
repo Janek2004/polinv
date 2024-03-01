@@ -1,7 +1,7 @@
 const cors = require('cors');
 const express = require('express');
 
-require('socketio');
+require('./socketio');
 
 const app = express();
 
