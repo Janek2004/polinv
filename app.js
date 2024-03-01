@@ -1,11 +1,12 @@
-const cors = require('cors');
-const express = require('express');
+//const cors = require('cors');
+//const express = require('express');
+
+//const app = express();
+//const httpServer = createServer(app);
 
 require('./socketio');
 
-const app = express();
-
-app.use(express.json());
+/*app.use(express.json());
 app.use(cors());
 
 app.get('/', (req, res) => {
@@ -17,6 +18,6 @@ app.get('*', (req, res) => {
 })
 
 const port = process.env.PORT ?? 3000;
-app.listen(port, () => {
+httpServer.listen(port, () => {
     console.log(`App listening on port ${port}`);
-})
+})*/

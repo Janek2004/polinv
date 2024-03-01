@@ -73,6 +73,4 @@ io.on('connection', socket => {
 
 });
 
-io.listen(8080);
-
-module.exports = null
+io.listen(3000);
