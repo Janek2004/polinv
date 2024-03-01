@@ -1,6 +1,9 @@
 const admin = require('firebase-admin');
 const { Server } = require('socket.io');
 
+const { createServer } = require("http");
+const httpServer = createServer();
+
 const serviceAccount = {
     "type": "service_account",
     "project_id": process.env['project_id'],
@@ -17,7 +20,7 @@ const serviceAccount = {
 
 admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
 
-const io = new Server({});
+const io = new Server(httpServer, { cors: { origin: '*' } });
 
 const devices = new Map();
 
@@ -73,4 +76,4 @@ io.on('connection', socket => {
 
 });
 
-io.listen(3000);
+httpServer.listen(3000);
