@@ -1,8 +1,4 @@
 const admin = require('firebase-admin');
-const { Server } = require('socket.io');
-
-const { createServer } = require("http");
-const httpServer = createServer();
 
 const serviceAccount = {
     "type": "service_account",
@@ -20,8 +16,6 @@ const serviceAccount = {
 
 admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
 
-const io = new Server(httpServer, { cors: { origin: '*' } });
-
 const devices = new Map();
 
 function verify_device(socket) {
@@ -32,48 +26,52 @@ function verify_device(socket) {
 
 }
 
-io.use((socket, next) => {
+module.exports = io => {
 
-    const token = socket.handshake.auth.token;
-    if (typeof token !== 'string' || !token) next(new Error('Invalid token'));
+    io.use((socket, next) => {
 
-    admin.auth().verifyIdToken(token).then(decodedToken => {
-        const uid = decodedToken.uid;
-        const email = decodedToken.email;
-        socket.uid = uid;
-        socket.join(uid);
-        socket.email = email;
-        if (!devices.get(socket.uid)) devices.set(socket.uid, new Map());
+        console.log('...');
+
+        const token = socket.handshake.auth.token;
+        if (typeof token !== 'string' || !token) next(new Error('Invalid token'));
+
+        admin.auth().verifyIdToken(token).then(decodedToken => {
+            const uid = decodedToken.uid;
+            const email = decodedToken.email;
+            socket.uid = uid;
+            socket.join(uid);
+            socket.email = email;
+            if (!devices.get(socket.uid)) devices.set(socket.uid, new Map());
+            next();
+        }).catch(err => next(new Error('Unauthorized')));
+
+    });
+
+    io.use((socket, next) => {
+
+        socket.join(socket.id);
+        if (socket.handshake.auth.device) verify_device(socket);
         next();
-    }).catch(err => next(new Error('Unauthorized')));
 
-});
-
-io.use((socket, next) => {
-
-    socket.join(socket.id);
-    if (socket.handshake.auth.device) verify_device(socket);
-    next();
-
-});
-
-io.on('connection', socket => {
-
-    console.log(`New socket connected (${socket.id}) -> ${socket.email}`);
-
-    socket.on('cmd', (device_id, action) => {
-        const validDevice = devices.get(socket.uid)?.get(device_id); // ? - hack ;D
-        if (validDevice) socket.to(device_id).emit(action);
     });
 
-    socket.on('disconnect', reason => {
-        console.log(`Socket disconnected (${socket.id}) -> ${reason}`);
-        if (socket.isDevice) {
-            io.to(socket.uid).emit('device disconnected', socket.id, reason);
-            devices.get(socket.uid).delete(socket.id);
-        }
+    io.on('connection', socket => {
+
+        console.log(`New socket connected (${socket.id}) -> ${socket.email}`);
+
+        socket.on('cmd', (device_id, action) => {
+            const validDevice = devices.get(socket.uid)?.get(device_id); // ? - hack ;D
+            if (validDevice) socket.to(device_id).emit(action);
+        });
+
+        socket.on('disconnect', reason => {
+            console.log(`Socket disconnected (${socket.id}) -> ${reason}`);
+            if (socket.isDevice) {
+                io.to(socket.uid).emit('device disconnected', socket.id, reason);
+                devices.get(socket.uid).delete(socket.id);
+            }
+        });
+
     });
 
-});
-
-httpServer.listen(3000);
+}
