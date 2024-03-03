@@ -22,11 +22,14 @@ function verify_device(socket) {
 
     socket.isDevice = true;
     socket.name = socket.handshake.auth.name;
-    devices.get(socket.uid).set(socket.id, socket.name);
+    devices.get(socket.uid).set(socket.id, {
+        name: socket.name,
+        events: socket.handshake.auth.events
+    });
 
 }
 
-function check_token(socket) { }
+//function check_token(socket) { }
 
 function on_connection(io, socket) {
 
@@ -34,13 +37,12 @@ function on_connection(io, socket) {
 
     io.to('user_' + socket.uid).emit('devices', Object.fromEntries(devices.get(socket.uid)));
 
-    socket.on('action', (device_id, action) => {
-        const validDevice = devices.get(socket.uid).has(device_id);
-        if (validDevice) io.to(device_id).emit(action);
+    socket.on('action', (device_id, action, data) => {
+        const validDevice = devices.get(socket.uid).has(device_id); // TODO: Do not check for valid device, make code to emit actions to '${socket.uid}_${device_id}'
+        if (validDevice) io.to(device_id).emit(action, data);
     });
 
     socket.on('answer', data => socket.to('user_' + socket.uid).emit('answer', socket.id, data));
-    //socket.on('events', events => socket.to('user_' + socket.uid).emit('events', socket.id, events));
 
     socket.on('disconnect', reason => {
         console.log(`Socket disconnected (${socket.id}) -> ${reason}`);
