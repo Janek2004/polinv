@@ -30,16 +30,16 @@ function check_token(socket) { }
 
 function on_connection(io, socket) {
 
-    console.log(`New socket connected (${socket.id}) -> ${socket.email}`);
+    console.log(`New socket connected (${socket.id}) (${socket.isDevice ? 'device' : 'user'}) -> ${socket.email}`);
 
-    io.to(socket.uid).emit('devices', devices.get(socket.uid));
+    io.to('user_' + socket.uid).emit('devices', devices.get(socket.uid));
 
     socket.on('action', (device_id, action) => {
         const validDevice = devices.get(socket.uid).has(device_id);
         if (validDevice) io.to(device_id).emit(action);
     });
 
-    socket.on('answer', data => socket.to(socket.uid).emit('answer', data));
+    socket.on('answer', data => socket.to('user_' + socket.uid).emit('answer', data));
 
     socket.on('get devices', () => {
         const user_devices = Object.fromEntries(devices.get(socket.uid));
@@ -51,7 +51,7 @@ function on_connection(io, socket) {
         if (socket.isDevice) {
             devices.get(socket.uid).delete(socket.id);
             const user_devices = devices.get(socket.uid);
-            io.to(socket.uid).emit('devices', user_devices);
+            io.to('user_' + socket.uid).emit('devices', user_devices);
         }
     });
 
@@ -80,6 +80,7 @@ module.exports = io => {
         socket.join(socket.id);
         socket.join(socket.uid);
         if (socket.handshake.auth.device) verify_device(socket);
+        else socket.join('user_' + socket.uid);
         next();
 
     });
