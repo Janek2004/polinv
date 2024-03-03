@@ -32,7 +32,7 @@ function on_connection(io, socket) {
 
     console.log(`New socket connected (${socket.id}) (${socket.isDevice ? 'device' : 'user'}) -> ${socket.email}`);
 
-    io.to('user_' + socket.uid).emit('devices', devices.get(socket.uid));
+    io.to('user_' + socket.uid).emit('devices', Object.fromEntries(devices.get(socket.uid)));
 
     socket.on('action', (device_id, action) => {
         const validDevice = devices.get(socket.uid).has(device_id);
@@ -41,16 +41,11 @@ function on_connection(io, socket) {
 
     socket.on('answer', data => socket.to('user_' + socket.uid).emit('answer', data));
 
-    socket.on('get devices', () => {
-        const user_devices = Object.fromEntries(devices.get(socket.uid));
-        socket.emit('devices', user_devices);
-    });
-
     socket.on('disconnect', reason => {
         console.log(`Socket disconnected (${socket.id}) -> ${reason}`);
         if (socket.isDevice) {
             devices.get(socket.uid).delete(socket.id);
-            const user_devices = devices.get(socket.uid);
+            const user_devices = Object.fromEntries(devices.get(socket.uid));
             io.to('user_' + socket.uid).emit('devices', user_devices);
         }
     });
