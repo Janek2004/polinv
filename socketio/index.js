@@ -28,17 +28,21 @@ function verify_device(socket) {
 
 function check_token(socket) { }
 
-function on_connection(socket) {
+function on_connection(io, socket) {
 
     console.log(`New socket connected (${socket.id}) -> ${socket.email}`);
 
-    socket.on('cmd', (device_id, action) => {
-        const validDevice = devices.get(socket.uid)?.get(device_id);
-        if (validDevice) socket.to(device_id).emit(action);
+    io.to(socket.uid).emit('devices', devices.get(socket.uid));
+
+    socket.on('action', (device_id, action) => {
+        const validDevice = devices.get(socket.uid).has(device_id);
+        if (validDevice) io.to(device_id).emit(action);
     });
 
+    socket.on('answer', data => socket.to(socket.uid).emit('answer', data));
+
     socket.on('get devices', () => {
-        const user_devices = devices.get(socket.uid);
+        const user_devices = Object.fromEntries(devices.get(socket.uid));
         socket.emit('devices', user_devices);
     });
 
@@ -80,6 +84,6 @@ module.exports = io => {
 
     });
 
-    io.on('connection', on_connection);
+    io.on('connection', socket => on_connection(io, socket));
 
 }

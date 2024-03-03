@@ -1,4 +1,4 @@
 node_modules
 package-lock.json
 .polinv_tokens
-main.py
+*.py
