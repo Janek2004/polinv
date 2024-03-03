@@ -39,7 +39,8 @@ function on_connection(io, socket) {
         if (validDevice) io.to(device_id).emit(action);
     });
 
-    socket.on('answer', data => socket.to('user_' + socket.uid).emit('answer', data));
+    socket.on('answer', data => socket.to('user_' + socket.uid).emit('answer', socket.id, data));
+    //socket.on('events', events => socket.to('user_' + socket.uid).emit('events', socket.id, events));
 
     socket.on('disconnect', reason => {
         console.log(`Socket disconnected (${socket.id}) -> ${reason}`);
