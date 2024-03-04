@@ -1,8 +1,8 @@
-const express = require("express");
+const express = require('express');
 var cors = require('cors');
 const app = express();
 
-const http = require("http");
+const http = require('http');
 const server = http.createServer(app);
 
 const { Server } = require('socket.io');
@@ -18,6 +18,9 @@ app.get('/', (req, res) => {
     res.send('Hi 😊');
 
 });
+
+app.use('/app', express.static(path.join(__dirname, 'dist')));
+app.get('/app', (req, res) => res.sendFile(path.join(__dirname, 'dist', 'index.html')));
 
 const port = 3000;
 server.listen(port, () => {
